@@ -1,0 +1,142 @@
+<Window x:Class="MDL_Demo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MDL_Demo"
+        Title="MDL Demo" Icon="app.ico" Width="760" Height="560" MinWidth="560" MinHeight="360"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="Visible" />
+        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Margin" Value="8,0,0,0" />
+        </Style>
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+            <Setter Property="Margin" Value="8,0,0,0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+    <DockPanel x:Name="MainContent" Margin="24,16,24,16">
+
+        <DockPanel x:Name="Toolbar" DockPanel.Dock="Top" Margin="0,0,0,16">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button x:Name="CleanButton" Content="Free disk space…" Click="Clean_Click"
+                        ToolTip="Remove downloaded versions that no demo uses." />
+                <Button x:Name="RefreshButton" Content="Refresh" Click="Refresh_Click" />
+            </StackPanel>
+            <TextBlock Text="Demos" FontSize="28" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </DockPanel>
+
+        <Border x:Name="WarnPanel" DockPanel.Dock="Top" Visibility="Collapsed" Margin="0,0,0,12" Padding="12"
+                Background="{DynamicResource SystemFillColorCautionBackgroundBrush}" CornerRadius="8">
+            <TextBlock TextWrapping="Wrap">
+                <Run x:Name="WarnText" />
+                <Hyperlink x:Name="WarnLink" RequestNavigate="Link_RequestNavigate"><Run x:Name="WarnLinkText" /></Hyperlink>
+            </TextBlock>
+        </Border>
+
+        <Expander x:Name="LogExpander" DockPanel.Dock="Bottom" Header="Details" Margin="0,8,0,0">
+            <TextBox x:Name="LogBox" Height="150" IsReadOnly="True" FontFamily="Consolas" FontSize="12"
+                     TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+        </Expander>
+
+        <TextBlock x:Name="StatusText" DockPanel.Dock="Bottom" Margin="0,8,0,0" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="Cards">
+                <ItemsControl x:Name="DemoList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type local:Demo}">
+                            <Border Margin="0,0,0,8" Padding="16,14" CornerRadius="8" BorderThickness="1"
+                                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Content="Open in browser" Click="Console_Click" Style="{StaticResource PrimaryButton}"
+                                                Visibility="{Binding IsRunning, Converter={StaticResource Visible}}" />
+                                        <Button Content="Start" Click="Start_Click" Style="{StaticResource PrimaryButton}"
+                                                Visibility="{Binding IsStopped, Converter={StaticResource Visible}}" />
+                                        <Button Content="Stop" Click="Stop_Click"
+                                                Visibility="{Binding IsRunning, Converter={StaticResource Visible}}" />
+                                        <Button Content="Delete…" Click="Delete_Click" />
+                                    </StackPanel>
+
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                            <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Fill" Value="{DynamicResource ControlStrongFillColorDefaultBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                                <Setter Property="Fill" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <TextBlock Margin="6,0,0,0" ToolTip="{Binding Status}"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                                <Run Text="{Binding StateText, Mode=OneWay}" />
+                                                <Run Text="·" />
+                                                <Run Text="{Binding ConsoleUrl, Mode=OneWay}" />
+                                            </TextBlock>
+                                            <TextBlock Margin="6,0,0,0" Text="· older version"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                       ToolTip="Created before the latest version was downloaded. New demos get the latest version."
+                                                       Visibility="{Binding IsOlderVersion, Converter={StaticResource Visible}}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid x:Name="CreateCard" MinHeight="76">
+                    <Rectangle RadiusX="8" RadiusY="8" StrokeThickness="1.5" StrokeDashArray="4 3"
+                               Stroke="{DynamicResource ControlStrongStrokeColorDefaultBrush}" />
+                    <Button x:Name="NewButton" Content="+ Create" Click="New_Click" Margin="0" MinWidth="120"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Style="{StaticResource AccentButtonStyle}" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+
+    <!-- In-window dialog, styled like a Windows 11 ContentDialog. -->
+    <Grid x:Name="Overlay" Visibility="Collapsed" Background="{DynamicResource SmokeFillColorDefaultBrush}">
+        <Border Width="440" Margin="24" HorizontalAlignment="Center" VerticalAlignment="Center"
+                CornerRadius="8" BorderThickness="1" KeyboardNavigation.TabNavigation="Cycle"
+                BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="32" ShadowDepth="8" Opacity="0.25" />
+            </Border.Effect>
+            <DockPanel>
+                <Border DockPanel.Dock="Bottom" Padding="24" CornerRadius="0,0,8,8"
+                        Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="DialogPrimary" Grid.Column="0" Margin="0" HorizontalAlignment="Stretch"
+                                Style="{StaticResource AccentButtonStyle}" Click="DialogPrimary_Click" />
+                        <Button x:Name="DialogClose" Grid.Column="2" Margin="0" HorizontalAlignment="Stretch"
+                                Click="DialogClose_Click" />
+                    </Grid>
+                </Border>
+                <StackPanel Margin="24,24,24,8" Background="Transparent">
+                    <TextBlock x:Name="DialogTitle" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"
+                               TextWrapping="Wrap" />
+                    <ContentPresenter x:Name="DialogBody" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+    </Grid>
+</Window>
