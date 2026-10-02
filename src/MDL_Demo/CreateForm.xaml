@@ -1,19 +1,20 @@
 <UserControl x:Class="MDL_Demo.CreateForm"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:MDL_Demo">
     <StackPanel>
-        <Label Content="_Name" Target="{Binding ElementName=NameBox}" Padding="0,0,0,6" />
+        <Label Content="{x:Static local:Lang.NameLabel}" Target="{Binding ElementName=NameBox}" Padding="0,0,0,6" />
         <TextBox x:Name="NameBox" TextChanged="NameBox_TextChanged" />
         <TextBlock x:Name="NameError" Margin="0,6,0,0" TextWrapping="Wrap" Visibility="Collapsed"
                    Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
         <TextBlock Margin="0,6,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                   Text="Optional. Shown at the top of the demo and used as the Moodle site name." />
+                   Text="{x:Static local:Lang.NameHint}" />
 
-        <CheckBox x:Name="DownloadBox" Content="_Download the latest version first" IsChecked="True" />
+        <CheckBox x:Name="DownloadBox" Content="{x:Static local:Lang.DownloadFirst}" IsChecked="True" />
         <TextBlock x:Name="DownloadHint" Margin="28,0,0,12" TextWrapping="Wrap"
                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                   Text="Recommended. Uncheck to use the version already on this computer." />
+                   Text="{x:Static local:Lang.DownloadHint}" />
 
-        <CheckBox x:Name="OpenBox" Content="_Open in the browser when it is ready" IsChecked="True" />
+        <CheckBox x:Name="OpenBox" Content="{x:Static local:Lang.OpenWhenReady}" IsChecked="True" />
     </StackPanel>
 </UserControl>

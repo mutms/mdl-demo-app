@@ -19,7 +19,7 @@ public partial class CreateForm : UserControl
         if (!hasImage)
         {
             DownloadBox.IsEnabled = false;
-            DownloadHint.Text = "The first demo downloads it, this can take a few minutes.";
+            DownloadHint.Text = Lang.FirstDownload;
         }
         Loaded += (_, _) => NameBox.Focus();
     }
@@ -33,7 +33,7 @@ public partial class CreateForm : UserControl
             : null;
         if (clash is null) return true;
 
-        NameError.Text = $"You already have a demo called \"{clash.Name.Trim()}\". Pick another name.";
+        NameError.Text = Lang.NameClash(clash.Name.Trim());
         NameError.Visibility = Visibility.Visible;
         NameBox.Focus();
         NameBox.SelectAll();

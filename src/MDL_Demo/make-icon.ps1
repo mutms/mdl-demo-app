@@ -2,7 +2,7 @@
 # (go/internal/webui/static/favicon.svg): the biohazard trefoil, dark on
 # Moodle orange. Windows PowerShell has no SVG renderer, and the shapes are
 # simple, so they are redrawn here at each icon size. Run it again after
-# changing the favicon:  powershell -File win\MDL_Demo\make-icon.ps1
+# changing the favicon:  powershell -File src\MDL_Demo\make-icon.ps1
 Add-Type -AssemblyName System.Drawing
 
 $sizes = 16, 20, 24, 32, 40, 48, 64, 256

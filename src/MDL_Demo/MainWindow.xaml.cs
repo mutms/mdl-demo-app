@@ -14,7 +14,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Loaded += async (_, _) => await Busy("Checking WSL containers…", ReloadAsync);
+        Loaded += async (_, _) => await Busy(Lang.CheckingWsl, ReloadAsync);
     }
 
     static Demo DemoOf(object sender) => (Demo)((FrameworkElement)sender).DataContext;
@@ -29,27 +29,42 @@ public partial class MainWindow : Window
     Func<bool>? dialogValidate;
 
     // Shows the in-window dialog; true when the primary button was clicked.
-    // The body is a message or a control (like the create form).
-    Task<bool> ShowDialogAsync(string title, object body, string primary, string? close = "Cancel",
-        Func<bool>? validate = null)
+    // The body is a message or a control (like the create form). Buttons in
+    // "more" close the dialog like the close button does; the caller listens
+    // to their Click to learn which one it was.
+    Task<bool> ShowDialogAsync(string? title, object body, string primary, bool cancel = true,
+        Func<bool>? validate = null, double width = 440, params Button[] more)
     {
+        DialogFrame.MaxWidth = width;
         DialogTitle.Text = title;
+        DialogTitle.Visibility = title is null ? Visibility.Collapsed : Visibility.Visible;
         DialogBody.Content = body is string text
             ? new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap }
             : body;
         DialogPrimary.Content = primary;
-        DialogClose.Content = close;
-        DialogClose.Visibility = close is null ? Visibility.Collapsed : Visibility.Visible;
-        Grid.SetColumnSpan(DialogPrimary, close is null ? 3 : 1);
-        // Enter and Esc go to the dialog only while it is open.
+        DialogClose.Content = Lang.Cancel;
+        DialogClose.Visibility = cancel ? Visibility.Visible : Visibility.Collapsed;
+        foreach (var button in more)
+        {
+            button.Margin = DialogClose.Margin;
+            button.HorizontalAlignment = HorizontalAlignment.Stretch;
+            button.Click += DialogClose_Click;
+            DialogButtons.Children.Insert(DialogButtons.Children.Count - 1, button);
+        }
+        // Enter and Esc go to the dialog only while it is open; without a
+        // cancel button Esc goes to the primary one.
         DialogPrimary.IsDefault = true;
-        DialogClose.IsCancel = close is not null;
+        DialogPrimary.IsCancel = !cancel;
+        DialogClose.IsCancel = cancel;
         MainContent.IsEnabled = false;
         Overlay.Visibility = Visibility.Visible;
-        if (body is string) DialogPrimary.Focus();
+        // A form moves the focus to its own field once it is loaded.
+        DialogPrimary.Focus();
 
         dialogValidate = validate;
-        dialog = new TaskCompletionSource<bool>();
+        // The caller continues after the click is over: it may open the next
+        // dialog, which could not take the focus from inside the click.
+        dialog = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         return dialog.Task;
     }
 
@@ -58,8 +73,10 @@ public partial class MainWindow : Window
         Overlay.Visibility = Visibility.Collapsed;
         MainContent.IsEnabled = true;
         DialogPrimary.IsDefault = false;
+        DialogPrimary.IsCancel = false;
         DialogClose.IsCancel = false;
         DialogBody.Content = null;
+        DialogButtons.Children.RemoveRange(1, DialogButtons.Children.Count - 2);
         dialog?.TrySetResult(result);
     }
 
@@ -87,7 +104,7 @@ public partial class MainWindow : Window
             Log("error: " + e.Message);
             StatusText.Text = e.Message;
             Mouse.OverrideCursor = null;
-            await ShowDialogAsync("Something went wrong", e.Message, "OK", close: null);
+            await ShowDialogAsync(Lang.SomethingWentWrong, e.Message, Lang.Ok, cancel: false);
         }
         finally
         {
@@ -95,7 +112,6 @@ public partial class MainWindow : Window
             Toolbar.IsEnabled = true;
             Cards.IsEnabled = true;
             NewButton.IsEnabled = ready;
-            CleanButton.IsEnabled = ready;
         }
     }
 
@@ -125,23 +141,21 @@ public partial class MainWindow : Window
         while (demos.Any(d => Math.Abs(d.Port - port) <= 1) || !isFree(port) || !isFree(port + 1))
         {
             port += 2;
-            if (port > 65534) throw new InvalidOperationException("Could not find a free port for a new demo.");
+            if (port > 65534) throw new InvalidOperationException(Lang.NoFreePort);
         }
         return port;
     }
 
     // wslc's own "Failed to map port" error is not for people.
-    static Exception Friendly(Exception e, string what) => Wslc.PortInUse(e) is { } port
-        ? new InvalidOperationException(
-            $"{what} because port {port} is used by another program on this computer. " +
-            "Close that program and try again.", e)
+    static Exception Friendly(Exception e, Func<int, string> message) => Wslc.PortInUse(e) is { } port
+        ? new InvalidOperationException(message(port), e)
         : e;
 
-    static void OpenUrl(string url) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+    internal static void OpenUrl(string url) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 
     async Task OpenConsoleWhenReadyAsync(Demo demo)
     {
-        StatusText.Text = "Waiting for the demo to start…";
+        StatusText.Text = Lang.WaitingForDemo;
         if (await Wslc.WaitForConsoleAsync(demo))
             OpenUrl(demo.ConsoleUrl);
         else
@@ -155,10 +169,10 @@ public partial class MainWindow : Window
         await Busy("", async () => hasImage = await Wslc.HasImageAsync(image));
 
         var form = new CreateForm(demos, hasImage);
-        if (!await ShowDialogAsync("New demo", form, "Create", validate: form.Validate)) return;
+        if (!await ShowDialogAsync(Lang.NewDemo, form, Lang.Create, validate: form.Validate)) return;
 
         var port = 0;
-        await Busy("Downloading the latest version, this can take a few minutes…", async () =>
+        await Busy(Lang.Downloading, async () =>
         {
             if (form.DownloadLatest || !hasImage)
             {
@@ -173,83 +187,129 @@ public partial class MainWindow : Window
                 }
             }
 
-            StatusText.Text = "Creating the demo…";
+            StatusText.Text = Lang.Creating;
             // Picked only now: the download can take minutes, other programs may start meanwhile.
             port = await NextFreePortAsync();
             try
             {
                 await Wslc.CreateAsync(port, form.DemoName, image, Log);
             }
-            catch (Exception ex) when (Friendly(ex, "The demo cannot be created") != ex)
+            catch (Exception ex) when (Friendly(ex, Lang.CannotCreatePortInUse) != ex)
             {
-                throw Friendly(ex, "The demo cannot be created");
+                throw Friendly(ex, Lang.CannotCreatePortInUse);
             }
             await ReloadAsync();
             var demo = demos.FirstOrDefault(d => d.Port == port);
             if (demo is not null && form.OpenConsole)
                 await OpenConsoleWhenReadyAsync(demo);
-            StatusText.Text = $"Created \"{demo?.Title}\". Set up your demo site in the browser.";
+            StatusText.Text = Lang.Created(demo?.Title);
         });
     }
 
     async void Start_Click(object sender, RoutedEventArgs e)
     {
         var demo = DemoOf(sender);
-        await Busy($"Starting \"{demo.Title}\"…", async () =>
+        await Busy(Lang.Starting(demo.Title), async () =>
         {
             try
             {
                 await Wslc.StartAsync(demo, Log);
             }
-            catch (Exception ex) when (Friendly(ex, $"\"{demo.Title}\" cannot start") != ex)
+            catch (Exception ex) when (Friendly(ex, port => Lang.CannotStartPortInUse(demo.Title, port)) != ex)
             {
-                throw Friendly(ex, $"\"{demo.Title}\" cannot start");
+                throw Friendly(ex, port => Lang.CannotStartPortInUse(demo.Title, port));
             }
             await ReloadAsync();
-            StatusText.Text = $"Started \"{demo.Title}\".";
+            StatusText.Text = Lang.Started(demo.Title);
         });
     }
 
     async void Stop_Click(object sender, RoutedEventArgs e)
     {
         var demo = DemoOf(sender);
-        await Busy($"Stopping \"{demo.Title}\"…", async () =>
+        await Busy(Lang.Stopping(demo.Title), async () =>
         {
             await Wslc.StopAsync(demo, Log);
             await ReloadAsync();
-            StatusText.Text = $"Stopped \"{demo.Title}\". Its site and data are kept.";
+            StatusText.Text = Lang.StoppedKept(demo.Title);
         });
     }
 
     async void Delete_Click(object sender, RoutedEventArgs e)
     {
         var demo = DemoOf(sender);
-        if (!await ShowDialogAsync($"Delete \"{demo.Title}\"?", "This removes its site and all its data.", "Delete"))
+        if (!await ShowDialogAsync(Lang.DeleteQuestion(demo.Title), Lang.DeleteWarning, Lang.Delete))
             return;
-        await Busy($"Deleting \"{demo.Title}\"…", async () =>
+        await Busy(Lang.Deleting(demo.Title), async () =>
         {
             await Wslc.DeleteAsync(demo, Log);
             await ReloadAsync();
-            StatusText.Text = $"Deleted \"{demo.Title}\".";
+            StatusText.Text = Lang.Deleted(demo.Title);
         });
     }
 
     void Console_Click(object sender, RoutedEventArgs e) => OpenUrl(DemoOf(sender).ConsoleUrl);
 
-    async void Clean_Click(object sender, RoutedEventArgs e)
+    // The brand and everything advanced live here, off the main page.
+    async void About_Click(object sender, RoutedEventArgs e)
     {
-        if (!await ShowDialogAsync("Free disk space?",
-                "Removes downloaded versions that no demo uses. Your demos and the latest version are kept.", "Remove"))
-            return;
-        await Busy("Freeing disk space…", async () =>
+        var clean = new Button
+        {
+            Content = Lang.FreeDiskSpaceMore,
+            ToolTip = Lang.FreeDiskSpaceHint,
+            IsEnabled = ready,
+        };
+        var language = new Button { Content = Lang.LanguageMore };
+        Button? clicked = null;
+        clean.Click += (_, _) => clicked = clean;
+        language.Click += (_, _) => clicked = language;
+        await ShowDialogAsync(null, new AboutPanel(), Lang.Close, cancel: false, width: 640, more: [clean, language]);
+        if (clicked == clean) await CleanAsync();
+        if (clicked == language) await PickLanguageAsync();
+    }
+
+    // For trying the translations: the choice lasts until the app closes.
+    async Task PickLanguageAsync()
+    {
+        var options = Lang.Names
+            .Select((name, i) => new RadioButton { Content = name, IsChecked = i == Lang.Current })
+            .ToList();
+        var panel = new StackPanel();
+        panel.Children.Add(new TextBlock
+        {
+            Text = Lang.TestLanguageText, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        });
+        foreach (var option in options) panel.Children.Add(option);
+        if (!await ShowDialogAsync(Lang.TestLanguage, panel, Lang.Switch)) return;
+
+        var picked = options.FindIndex(o => o.IsChecked == true);
+        if (picked == Lang.Current) return;
+        Lang.Current = picked;
+        // A window reads its texts when it is built: put a new one in this one's place.
+        var bounds = RestoreBounds;
+        var window = new MainWindow
+        {
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Left = bounds.Left, Top = bounds.Top, Width = bounds.Width, Height = bounds.Height,
+            WindowState = WindowState,
+        };
+        Application.Current.MainWindow = window;
+        window.Show();
+        Close();
+    }
+
+    async Task CleanAsync()
+    {
+        if (!await ShowDialogAsync(Lang.FreeDiskSpaceQuestion, Lang.FreeDiskSpaceText, Lang.Remove)) return;
+        await Busy(Lang.FreeingDiskSpace, async () =>
         {
             await Wslc.RemoveOldImagesAsync(demos, Log);
             await ReloadAsync();
-            StatusText.Text = "Done.";
+            StatusText.Text = Lang.Done;
         });
     }
 
-    async void Refresh_Click(object sender, RoutedEventArgs e) => await Busy("Refreshing…", ReloadAsync);
+    async void Refresh_Click(object sender, RoutedEventArgs e) => await Busy(Lang.Refreshing, ReloadAsync);
 
     void Link_RequestNavigate(object sender, RequestNavigateEventArgs e)
     {

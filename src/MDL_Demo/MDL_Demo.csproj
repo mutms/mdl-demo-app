@@ -6,11 +6,12 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>mdl-demo</AssemblyName>
     <RootNamespace>MDL_Demo</RootNamespace>
     <Product>MDL Demo</Product>
     <AssemblyTitle>MDL Demo</AssemblyTitle>
     <Description>Run throwaway Moodle/MuTMS demo sites on Windows, in a container.</Description>
-    <Version>0.1.0</Version>
+    <Version>1.1.0</Version>
     <Copyright>Copyright (c) 2026 Petr Skoda</Copyright>
     <!-- Made by make-icon.ps1 from mdl-demo's favicon.svg. -->
     <ApplicationIcon>app.ico</ApplicationIcon>

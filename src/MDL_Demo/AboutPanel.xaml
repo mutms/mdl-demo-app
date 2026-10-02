@@ -1,0 +1,71 @@
+<UserControl x:Class="MDL_Demo.AboutPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:MDL_Demo">
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="LogoOrange" Color="#f98012" />
+        <SolidColorBrush x:Key="LogoDark" Color="#201408" />
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- mdl-demo's logo.svg redrawn (WPF has no SVG renderer): the CAUTION
+             placard with the biohazard trefoil. Same 120x148 coordinates; a WPF
+             stroke lies inside the shape's bounds, an SVG one is centred on its
+             outline, so sizes here include the stroke. -->
+        <Viewbox DockPanel.Dock="Left" Width="150" VerticalAlignment="Top" Margin="0,0,20,0">
+            <Canvas Width="120" Height="148">
+                <Rectangle Canvas.Left="2.5" Canvas.Top="2.5" Width="115" Height="143" RadiusX="18" RadiusY="18"
+                           Fill="{StaticResource LogoOrange}" Stroke="{StaticResource LogoDark}" StrokeThickness="3" />
+                <Grid Canvas.Left="4" Canvas.Top="4" Width="112" Height="36" Background="{StaticResource LogoDark}">
+                    <Grid.Clip>
+                        <RectangleGeometry Rect="1.5,1.5,109,137" RadiusX="15.5" RadiusY="15.5" />
+                    </Grid.Clip>
+                    <!-- One letter per item: WPF text has no letter spacing. -->
+                    <ItemsControl ItemsSource="CAUTION" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Margin="1,0" FontFamily="Segoe UI" FontSize="18"
+                                           FontWeight="ExtraBold" Foreground="{StaticResource LogoOrange}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+                <Ellipse Canvas.Left="44.75" Canvas.Top="48.75" Width="30.5" Height="30.5"
+                         Stroke="{StaticResource LogoDark}" StrokeThickness="6.5" />
+                <Ellipse Canvas.Left="33.75" Canvas.Top="70.75" Width="30.5" Height="30.5"
+                         Stroke="{StaticResource LogoDark}" StrokeThickness="6.5" />
+                <Ellipse Canvas.Left="55.75" Canvas.Top="70.75" Width="30.5" Height="30.5"
+                         Stroke="{StaticResource LogoDark}" StrokeThickness="6.5" />
+                <Ellipse Canvas.Left="50.25" Canvas.Top="68.25" Width="19.5" Height="19.5"
+                         Fill="{StaticResource LogoOrange}" Stroke="{StaticResource LogoDark}" StrokeThickness="5.5" />
+                <Line X1="22" Y1="114" X2="98" Y2="114" Stroke="{StaticResource LogoDark}" StrokeThickness="2" />
+                <TextBlock Canvas.Left="4" Canvas.Top="118" Width="112" TextAlignment="Center" Text="mdl-demo"
+                           FontFamily="Consolas" FontSize="16" FontWeight="Bold"
+                           Foreground="{StaticResource LogoDark}" />
+            </Canvas>
+        </Viewbox>
+
+        <Border Padding="16,14" CornerRadius="8" BorderThickness="1"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+            <StackPanel>
+                <TextBlock Text="mdl-demo" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock x:Name="VersionText" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{x:Static local:Lang.Description}" Margin="0,12,0,0" TextWrapping="Wrap" />
+                <TextBlock Margin="0,12,0,0" TextWrapping="Wrap">
+                    <Hyperlink NavigateUri="https://github.com/mutms/mdl-demo-win"
+                               RequestNavigate="Link_RequestNavigate">github.com/mutms/mdl-demo-win</Hyperlink>
+                </TextBlock>
+                <TextBlock Margin="0,12,0,0" Text="{x:Static local:Lang.License}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Name="CopyrightText" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Border>
+    </DockPanel>
+</UserControl>

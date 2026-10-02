@@ -27,9 +27,9 @@ If WSL is missing or too old, MDL Demo tells you what to do.
 
 ## Download
 
-1. Download `MDL_Demo_Unsigned.zip` from the
-   [latest release](https://github.com/mutms/mdl-demo-app/releases/latest).
-2. Unzip it and run `MDL_Demo.exe`.
+1. Download `mdl-demo-unsigned.zip` from the
+   [latest release](https://github.com/mutms/mdl-demo-win/releases/latest).
+2. Unzip it and run `mdl-demo.exe`.
 
 There is nothing to install: the app is a single file. Keep it wherever you
 like, for example on the desktop.
@@ -45,7 +45,7 @@ To run it anyway, click **More info**, then **Run anyway**. Windows remembers
 your choice for this file.
 
 Only do this with a copy you downloaded from this project's
-[releases page](https://github.com/mutms/mdl-demo-app/releases). If you would
+[releases page](https://github.com/mutms/mdl-demo-win/releases). If you would
 rather not run an unsigned file, you can build the app yourself from this
 source code (see [Building](#building)).
 
@@ -58,13 +58,17 @@ source code (see [Building](#building)).
 - **Stop** shuts a demo down when you do not need it; its site and data are
   kept. **Start** brings it back.
 - **Delete…** removes a demo together with its site and all its data.
-- **Free disk space…** removes downloaded versions that no demo uses.
+- **About** shows the version and where the app comes from. Its
+  **Free disk space…** button removes downloaded versions that no demo uses.
 
 ![Creating a new demo](docs/images/new-demo.png)
 
 Each demo gets its own address: the first one is <http://127.0.0.1:8081>, the
 next <http://127.0.0.1:8083> and so on. MDL Demo skips ports that other
 programs on your computer already use.
+
+MDL Demo speaks English, Czech and German: it uses the language of Windows,
+and English when Windows is set to any other language.
 
 MDL Demo does the same as the `mdl-demo.cmd` helper from
 [mdl-demo](https://github.com/mutms/mdl-demo/blob/main/WINDOWS.md), so demos
@@ -81,13 +85,13 @@ winget install Microsoft.DotNet.SDK.10
 Run the app from the source:
 
 ```powershell
-dotnet run --project win\MDL_Demo
+dotnet run --project src\MDL_Demo
 ```
 
-Build the release files `dist\MDL_Demo.exe` and `dist\MDL_Demo_Unsigned.zip`:
+Build the release files `dist\mdl-demo.exe` and `dist\mdl-demo-unsigned.zip`:
 
 ```powershell
-win\build-release.cmd
+src\build-release.cmd
 ```
 
 ## Security

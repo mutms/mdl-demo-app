@@ -4,7 +4,7 @@
 
 Please do not report security problems in public issues. Report them
 privately through GitHub instead:
-[Report a vulnerability](https://github.com/mutms/mdl-demo-app/security/advisories/new).
+[Report a vulnerability](https://github.com/mutms/mdl-demo-win/security/advisories/new).
 
 Describe what you found, how to reproduce it and which version of MDL Demo
 you used. You will get a reply as soon as the maintainer can look at it.
@@ -41,5 +41,5 @@ download is the demo image, made by `wslc`.
 
 Release files are not code-signed yet, so Windows cannot confirm who made
 them. Download MDL Demo only from this project's
-[releases page](https://github.com/mutms/mdl-demo-app/releases), or build it
+[releases page](https://github.com/mutms/mdl-demo-win/releases), or build it
 yourself from the source (see the [README](README.md#building)).

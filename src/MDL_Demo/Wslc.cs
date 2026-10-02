@@ -32,22 +32,12 @@ public static class Wslc
 
     // --no-distribution: containers need no Linux distribution, and installing
     // one would ask for a Linux user name.
-    static readonly WslcProblem NotInstalled = new(
-        "MDL Demo needs the Windows Subsystem for Linux (WSL), a free part of Windows from Microsoft. " +
-        "To install it, open Terminal as administrator and run:  wsl --install --no-distribution  " +
-        "then restart the computer and open MDL Demo again.",
-        InstallPage, "How to install WSL (Microsoft)");
+    static WslcProblem NotInstalled => new(Lang.WslNotInstalled, InstallPage, Lang.HowToInstallWsl);
 
     // WSL containers came with WSL 2.9.3.
-    static readonly WslcProblem TooOld = new(
-        "MDL Demo needs a newer version of the Windows Subsystem for Linux (WSL), with WSL containers. " +
-        "To update it, open Terminal and run:  wsl --update  then open MDL Demo again.",
-        ContainersPage, "About WSL containers (Microsoft)");
+    static WslcProblem TooOld => new(Lang.WslTooOld, ContainersPage, Lang.AboutWslContainers);
 
-    static readonly WslcProblem NotResponding = new(
-        "The Windows Subsystem for Linux (WSL) is installed but not responding. " +
-        "Open Terminal and run:  wsl --update  then click Refresh.",
-        ContainersPage, "About WSL containers (Microsoft)");
+    static WslcProblem NotResponding => new(Lang.WslNotResponding, ContainersPage, Lang.AboutWslContainers);
 
     static readonly string WslDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WSL");
@@ -187,7 +177,7 @@ public static class Wslc
     {
         var cname = Prefix + port;
         if ((await RunAsync(["inspect", cname])).ExitCode == 0)
-            throw new InvalidOperationException($"{cname} already exists.");
+            throw new InvalidOperationException(Lang.AlreadyExists(cname));
 
         List<string> args = ["run", "-d", "--name", cname, "-e", $"MDL_DEMO_PORT={port}"];
         if (!string.IsNullOrWhiteSpace(name))
@@ -322,7 +312,7 @@ public record WslcResult(int ExitCode, string Output, string Error);
 public record WslcProblem(string Message, string HelpUrl, string HelpText);
 
 public class WslcException(WslcResult result) : Exception(
-    string.IsNullOrWhiteSpace(result.Error) ? $"wslc failed (exit code {result.ExitCode})." : result.Error.Trim());
+    string.IsNullOrWhiteSpace(result.Error) ? Lang.WslcFailed(result.ExitCode) : result.Error.Trim());
 
 public record ImageInfo(string Repository, string Tag, string Id, DateTime? Created, string Size, int Containers)
 {
@@ -342,6 +332,6 @@ public class Demo
     public bool IsRunning => State == "running";
     public bool IsStopped => !IsRunning;
     public string Title => Name.Length > 0 ? Name : $"Demo {Port}";
-    public string StateText => IsRunning ? "Running" : "Stopped";
+    public string StateText => IsRunning ? Lang.Running : Lang.Stopped;
     public string ConsoleUrl => $"http://127.0.0.1:{Port}";
 }
